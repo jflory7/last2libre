@@ -27,6 +27,8 @@ from urllib.request import urlopen
 # import __version__
 __version__ = '1.0.0-dev'
 
+LASTFM_BASE_URL = 'https://ws.audioscrobbler.com/2.0/?'
+LIBREFM_BASE_URL = 'https://libre.fm/2.0/?'
 
 class Exporter(object):
 
@@ -66,15 +68,15 @@ class Exporter(object):
 
         # Build an API URL for the platform to export data from
         if self.server == 'lastfm':
-            base_url = 'https://ws.audioscrobbler.com/2.0/?'
+            base_url = LASTFM_BASE_URL
             url_vars = dict(
-                method='user.get%s' % self.entity_type,
+                method='user.get{}'.format(self.entity_type),
                 api_key=self.api_key,
                 user=self.user,
                 page=self.page_number,
                 limit=50)
         elif self.server == 'librefm':
-            base_url = 'https://libre.fm/2.0/?'
+            base_url = LIBREFM_BASE_URL
             url_vars = dict(
                 method='user.get%s' % self.entity_type,
                 api_key=('%(prog)s' % __version__).ljust(32, '-'),
@@ -84,7 +86,7 @@ class Exporter(object):
         # Assume custom Libre.fm server
         else:
             if self.server[:7] != 'http://':
-                self.server = 'http://%s' % self.server
+                self.server = 'http://{}'.format(self.server)
             base_url = self.server + '/2.0/?'
             url_vars = dict(
                 method='user.get%s' % self.entity_type,

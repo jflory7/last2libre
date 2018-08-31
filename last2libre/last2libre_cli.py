@@ -2,6 +2,7 @@
 
 import argparse
 
+import importer
 import exporter
 
 
@@ -14,11 +15,19 @@ def sub_export(args):
         server=args.server,
         user=args.username,
     )
-    transaction.export()
+    transaction.run()
 
 
 def sub_import(args):
-    pass
+    transaction = importer.Importer(
+        in_file=args.input,
+        api_key=args.key,
+        server=args.server,
+        server_url=args.server_url,
+        entity_type=args.entity_type,
+        username=args.username,
+    )
+    transaction.run()
 
 
 def main():
@@ -41,7 +50,6 @@ def main():
         aliases=['e'],
         help='export from platform',
     )
-
     parser_export.add_argument(
         '-k', '--key',
         default=None,
@@ -67,7 +75,7 @@ def main():
         '-s', '--server',
         choices=['custom', 'lastfm', 'librefm'],
         default='lastfm',
-        help='Server to fetch track info from [default: lastfm]',
+        help='Server to export listen history from [default: lastfm]',
         type=str,
     )
     parser_export.add_argument(
@@ -95,9 +103,15 @@ def main():
         aliases=['i'],
         help='import to platform',
     )
-
     parser_import.add_argument(
-        '-i', '--in',
+        '-d', '--debug',
+        action='store_true',
+        default=False,
+        dest='debug',
+        help='Verbose debug logging',
+    )
+    parser_import.add_argument(
+        '-i', '--input',
         default=None,
         help='Path to saved data file',
         metavar='FILE',
@@ -114,8 +128,24 @@ def main():
     )
     parser_import.add_argument(
         '-s', '--server',
-        default='last.fm',
-        help='Server to fetch track info from [default: last.fm]',
+        choices=['custom', 'librefm'],
+        default='librefm',
+        help='Server to import listen history into [default: librefm]',
+        type=str,
+    )
+    parser_import.add_argument(
+        '--server-url',
+        default=None,
+        help='Base URL of custom GNU.fm server',
+        type=str,
+    )
+    parser_import.add_argument(
+        '-t', '--type',
+        choices=['scrobbles', 'loved', 'banned', 'unloved', 'unbanned'],
+        default=None,
+        dest='entity_type',
+        help='Type of information to import [default: scrobbles]',
+        required=True,
         type=str,
     )
     parser_import.add_argument(
