@@ -21,7 +21,8 @@ import os
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from scrobblelib import ScrobbleException, ScrobbleServer, ScrobbleTrack
+from last2libre.scrobblelib import ScrobbleException, ScrobbleServer, \
+    ScrobbleTrack
 
 LIBREFM_BASE_URL = 'https://libre.fm/2.0/?'
 
@@ -48,7 +49,7 @@ class Importer(object):
             api_key=self.api_key
         )
 
-        req = self.server_url + urlencode(getdata)
+        req = self.server_url + urlencode(get_data)
         response = urlopen(req)
 
         try:
@@ -145,4 +146,4 @@ class Importer(object):
                 except Exception as e:
                     print(
                         'Error on line {}/{} ({} by {}):\n{}'.format(
-                            n, enumerate(f), title, artist, e)
+                            n, enumerate(f), title, artist, e))

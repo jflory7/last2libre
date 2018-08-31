@@ -1,3 +1,3 @@
-from setuptools.config import read_configuration
+import setuptools
 
-conf_dict = read_configuration('setup.cfg')
+setuptools.setup()

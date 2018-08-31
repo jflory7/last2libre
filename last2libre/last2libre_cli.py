@@ -2,8 +2,7 @@
 
 import argparse
 
-import importer
-import exporter
+from last2libre import importer, exporter, __version__
 
 
 def sub_export(args):
@@ -41,7 +40,7 @@ def main():
     parser.add_argument(
         '--version',
         action='version',
-        version='%(prog)s :-(',
+        version='%(prog)s ' + __version__,
     )
 
     # Create parser for 'export' subcommand

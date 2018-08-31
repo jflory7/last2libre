@@ -24,11 +24,11 @@ import xml.etree.ElementTree as ET
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-# import __version__
-__version__ = '1.0.0-dev'
+from last2libre import __version__
 
 LASTFM_BASE_URL = 'https://ws.audioscrobbler.com/2.0/?'
 LIBREFM_BASE_URL = 'https://libre.fm/2.0/?'
+
 
 class Exporter(object):
 
@@ -83,7 +83,7 @@ class Exporter(object):
                 user=self.username,
                 page=self.page_number,
                 limit=200)
-        # Assume custom Libre.fm server
+        # Assume custom Gnu.fm server
         else:
             if self.server[:7] != 'http://':
                 self.server = 'http://{}'.format(self.server)
@@ -188,7 +188,7 @@ class Exporter(object):
                     self.page_number, total_pages))
 
         while current_page <= total_pages:
-            # Skip connect if on first page, already have that one stored.
+            # Skip connect if on first page, already have that one stored
             if current_page > self.page_number:
                 response = self.connect_server()
 
@@ -219,7 +219,7 @@ class Exporter(object):
                     if self.entity_type == 'recenttracks':
                         listen_dict.setdefault(listen[0], listen)
                     else:
-                        # Cannot use timestamp as key for loved/banned tracks
+                        # Cannot use timestamp as key for loved / banned tracks
                         # as it is not unique – skip over this listen
                         n += 1
                         listen_dict.setdefault(n, listen)
