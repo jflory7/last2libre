@@ -122,7 +122,6 @@ def main():
         default=None,
         help='API key to use for music service platform',
         metavar='API_KEY',
-        required=True,
         type=str,
     )
     parser_import.add_argument(
@@ -143,7 +142,7 @@ def main():
         choices=['scrobbles', 'loved', 'banned', 'unloved', 'unbanned'],
         default=None,
         dest='entity_type',
-        help='Type of information to import [default: scrobbles]',
+        help='Type of information to import',
         required=True,
         type=str,
     )

@@ -38,9 +38,18 @@ class Importer(object):
         self.entity_type = entity_type
         self.username = username
 
+    def check_server(self):
+        if self.server == 'librefm':
+            self.server_url = LIBREFM_BASE_URL
+        elif self.server == 'custom':
+            self.server_url = self.server_url + '/2.0/?'
+
     def auth(self, password):
-        passwd_md5 = hashlib.md5(password).hexdigest()
-        token = hashlib.md5(self.username + passwd_md5).hexdigest()
+        encoded_password = password.encode('utf-8')
+        passwd_md5 = hashlib.md5(encoded_password).hexdigest()
+        encoded_token = (self.username + passwd_md5).encode('utf-8')
+        token = hashlib.md5(encoded_token).hexdigest()
+
         get_data = dict(
             method='auth.getMobileSession',
             username=self.username,
@@ -58,12 +67,6 @@ class Importer(object):
         except Exception:
             print(json_response)
             raise SystemExit(1)
-
-    def check_server(self):
-        if self.server == 'librefm':
-            self.server_url = LIBREFM_BASE_URL
-        elif self.server == 'custom':
-            self.server_url = self.server_url + '/2.0/?'
 
     def submit(self, artist, title):
         if self.entity_type == 'loved':
@@ -102,7 +105,10 @@ class Importer(object):
 
     def run(self):
         self.check_server()
-        password = (os.getenv('L2L_PASSWORD', getpass.getpass()))
+        if os.getenv('L2L_PASSWORD') is not None:
+            password = os.getenv('L2L_PASSWORD')
+        else:
+            password = getpass.getpass()
         self.auth(password)
 
         if self.datatype == 'scrobbles':
