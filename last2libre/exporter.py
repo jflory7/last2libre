@@ -193,7 +193,7 @@ class Exporter(object):
                 response = self.connect_server()
 
             listen_list = self.get_listen_list(response)
-            listens = []
+            listens = list()
 
             for listen in listen_list:
                 # do not export currently playing track

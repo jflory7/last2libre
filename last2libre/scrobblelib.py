@@ -23,7 +23,7 @@ class ScrobbleServer(object):
         self.debug = debug
 
         self.log = None
-        self.post_data = []
+        self.post_data = list()
         if debug:
             self.log = open(username + '.response.log', 'w+')
 
@@ -32,7 +32,7 @@ class ScrobbleServer(object):
             return
 
         i = 0
-        data = []
+        data = list()
         last_error = None
 
         for listen in self.post_data:
@@ -79,7 +79,7 @@ class ScrobbleServer(object):
                 'Cannot scrobble after multiple retries. \n'
                 + 'Last error: {}'.format(last_error))
 
-        self.post_data = []
+        self.post_data = list()
         time.sleep(1)
 
     def add_listen(self, listen):
@@ -103,7 +103,7 @@ class ScrobbleTrack(object):
         self.track_number = track_number
 
     def get_tuples(self, i):
-        data = []
+        data = list()
         data += [
             ('timestamp[%d]' % i, self.timestamp),
             ('track[%d]' % i, self.trackname),
