@@ -1,8 +1,17 @@
 #!/usr/bin/env python
 
 import argparse
+import logging
+import os
 
 from last2libre import importer, exporter, __version__
+
+logging.basicConfig(
+    datefmt='%Y-%m-%dT%H:%M:%S',
+    format='%(asctime)s | %(levelname)s | %(name)s | %(message)s',
+    level=os.environ.get("LOGLEVEL", "INFO"),
+)
+logger = logging.getLogger(__name__)
 
 
 def sub_export(args):
@@ -15,18 +24,24 @@ def sub_export(args):
         user=args.username,
     )
     transaction.run()
+    logger.debug('Export transaction completed.')
 
 
 def sub_import(args):
-    transaction = importer.Importer(
-        in_file=args.input,
-        api_key=args.key,
-        server=args.server,
-        server_url=args.server_url,
-        entity_type=args.entity_type,
-        username=args.username,
-    )
-    transaction.run()
+    try:
+        transaction = importer.Importer(
+            in_file=args.input,
+            api_key=args.key,
+            server=args.server,
+            server_url=args.server_url,
+            entity_type=args.entity_type,
+            username=args.username,
+        )
+        transaction.run()
+    except InvalidScrobbleServer as iss:
+        logger.critical(iss)
+        raise SystemExit(0)
+    logger.debug('Import transaction completed.')
 
 
 def main():

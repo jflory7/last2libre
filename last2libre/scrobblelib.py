@@ -1,34 +1,34 @@
 import json
+import logging
 import time
 
 from urllib.parse import urlencode
 from urllib.request import Request, URLError, HTTPError, urlopen
 
-
-class ScrobbleException(Exception):
-    pass
+logger = logging.getLogger(__name__)
 
 
 class InvalidScrobbleServer(Exception):
     pass
 
 
+class ScrobbleException(Exception):
+    pass
+
+
 class ScrobbleServer(object):
     def __init__(
-            self, server_url, session_key, api_key, debug=False,
-            username=False):
+            self, server_url, session_key, api_key, username=False):
         self.server_url = server_url
         self.session_key = session_key
         self.api_key = api_key
         self.debug = debug
 
-        self.log = None
         self.post_data = list()
-        if debug:
-            self.log = open(username + '.response.log', 'w+')
 
     def submit(self):
         if len(self.post_data) == 0:
+            logger.error('No data to submit. Canceling.')
             return
 
         i = 0
@@ -45,6 +45,7 @@ class ScrobbleServer(object):
             ('api_key', self.api_key),
             ('format', 'json'),
         ]
+        logger.debug('data: {}'.format(data))
 
         for timeout in (1, 2, 4, 8, 16, 32):
             try:
@@ -52,32 +53,32 @@ class ScrobbleServer(object):
                 response = urlopen(req)
             except (URLError, HTTPError) as e:
                 last_error = str(e)
-                print('Scrobbling error, will retry in {}s:\n{}'.format(
+                logger.error('Scrobbling error, will retry in {}s: {}'.format(
                     timeout, last_error))
             else:
-                json_response = json.load(response)
+                json_response = json.loads(response)
 
                 # Checking if key exists
                 if 'scrobbles' in json_response:
-                    if self.debug:
-                        for v in json_response['scrobbles']['scrobble']:
-                            self.log.write(str(v) + '\n')
+                    for v in json_response['scrobbles']['scrobble']:
+                        logger.debug(str(v))
                     break
                 elif 'error' in json_response:
                     last_error = 'Bad server response: {}'.format(
                         json_response['error'])
-                    print('Scrobbling error, will retry in {}s:\n{}'.format(
-                        timeout, last_error))
+                    logger.error('Scrobbling error, will retry in '
+                        + '{}s: {}'.format(imeout, last_error))
                 else:
                     last_error = 'Bad server response: {}'.format(
                         response.read())
-                    print('Scrobbling error, will retry in {}s:\n{}'.format(
-                        last_error, timeout))
+                    logger.error('Scrobbling error, will retry in '
+                        + '{}s: {}'.format(last_error, timeout))
             time.sleep(timeout)
         else:
             raise ScrobbleException(
                 'Cannot scrobble after multiple retries. \n'
-                + 'Last error: {}'.format(last_error))
+                + 'Last error: {}'.format(last_error)
+            )
 
         self.post_data = list()
         time.sleep(1)
@@ -85,7 +86,7 @@ class ScrobbleServer(object):
     def add_listen(self, listen):
         i = len(self.post_data)
         if i > 49:
-            self.submit(time.sleep(1))
+            self.submit()
             i = 0
         self.post_data.append(listen)
 

@@ -18,6 +18,7 @@ API. Then, the listens are cleaned and written out into a text file.
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import logging
 import time
 import xml.etree.ElementTree as ET
 
@@ -28,6 +29,7 @@ from last2libre import __version__
 
 LASTFM_BASE_URL = 'https://ws.audioscrobbler.com/2.0/?'
 LIBREFM_BASE_URL = 'https://libre.fm/2.0/?'
+logger = logging.getLogger(__name__)
 
 
 class Exporter(object):
@@ -95,6 +97,7 @@ class Exporter(object):
                 page=self.page_number,
                 limit=200)
         url = base_url + urlencode(url_vars)
+        logger.debug('server type: {},url: {}'.format(self.server, url))
 
         # Attempt connection to API URL
         for interval in (1, 5, 10, 62):
@@ -103,16 +106,17 @@ class Exporter(object):
                 break
             except Exception as e:
                 last_exc = e
-                print('Exception occurred, retrying in {}s: {}'.format(
+                logger.error('Exception occurred, retrying in {}s: {}'.format(
                     interval, e))
                 time.sleep(interval)
         else:
-            print('Failed to open page: {}'.format(url_vars['page']))
+            logger.critical('Failed to open page: {}'.format(url_vars['page']))
             raise last_exc
 
         # Retrieve XML page to export
         response = f.read()
         f.close()
+        logger.debug('XML page successfully retrieved.')
         return response
 
     def get_listen_list(self, response):
@@ -121,10 +125,11 @@ class Exporter(object):
         listen_list = xml_page.getiterator('track')
         return listen_list
 
-    def get_page_info(self, response):
+    def get_total_pages(self, response):
         """Check how many pages of listens user has."""
         xml_page = ET.fromstring(response)
         total_pages = xml_page.find(self.entity_type).attrib.get('totalPages')
+        logger.info('{} pages found.'.format(total_pages))
         return int(total_pages)
 
     def parse_listen(self, listen):
@@ -174,13 +179,14 @@ class Exporter(object):
             listens: List of listens (payload data)
             fp: File pointer to open file object
         """
-        for fields in listens:
-            fp.write(('\t'.join(fields) + '\n'))
+        for listen in listens:
+            fp.write(('\t'.join(listen) + '\n'))
+            logger.debug('Now logging: {}'.format(listen))
 
     def get_tracks(self):
         current_page = self.page_number
         response = self.connect_server()
-        total_pages = self.get_page_info(response)
+        total_pages = self.get_total_pages(response)
 
         if self.page_number > total_pages:
             raise ValueError(
@@ -214,7 +220,8 @@ class Exporter(object):
 
         try:
             for current_page, total_pages, listens in self.get_tracks():
-                print('Got page {} of {}.'.format(current_page, total_pages))
+                logger.info('Exporting page {} of {}.'.format(
+                    current_page, total_pages))
                 for listen in listens:
                     if self.entity_type == 'recenttracks':
                         listen_dict.setdefault(listen[0], listen)
@@ -231,7 +238,7 @@ class Exporter(object):
             with open(self.out_file, 'a') as fp:
                 listens = sorted(listen_dict.values(), reverse=True)
                 self.write_listens(listens, fp)
-                print(
+                logger.info(
                     'Wrote page {}-{} of {} to file {}'.format(
                         self.page_number, current_page,
                         total_pages, self.out_file))
