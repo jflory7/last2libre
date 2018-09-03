@@ -13,6 +13,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import logging
 import getpass
 import hashlib
 import json
@@ -21,10 +22,11 @@ import os
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from last2libre.scrobblelib import ScrobbleException, ScrobbleServer, \
-    ScrobbleTrack
+from last2libre.scrobblelib import InvalidScrobbleServer, ScrobbleException, \
+    ScrobbleServer, ScrobbleTrack
 
 LIBREFM_BASE_URL = 'https://libre.fm/2.0/?'
+logger = logging.getLogger(__name__)
 
 
 class Importer(object):
@@ -43,6 +45,7 @@ class Importer(object):
             self.server_url = LIBREFM_BASE_URL
         elif self.server == 'custom':
             self.server_url = self.server_url + '/2.0/?'
+        logger.debug('server_url: {}'.format(self.server_url))
 
     def auth(self, password):
         encoded_password = password.encode('utf-8')
@@ -58,15 +61,17 @@ class Importer(object):
             api_key=self.api_key
         )
 
+
         req = self.server_url + urlencode(get_data)
         response = urlopen(req)
 
         try:
             json_response = json.load(response)
             self.session_key = json_response['session']['key']
-        except Exception:
-            print(json_response)
-            raise SystemExit(1)
+        except Exception as e:
+            logger.critical('Authentication attempt to {} failed.'.format(req))
+            logger.error(json_response)
+            raise InvalidScrobbleServer(e)
 
     def submit(self, artist, title):
         if self.entity_type == 'loved':
