@@ -19,17 +19,18 @@ API. Then, the listens are cleaned and written out into a text file.
 #
 
 import logging
+import requests
 import time
 import xml.etree.ElementTree as ET
-
-from urllib.parse import urlencode
-from urllib.request import urlopen
 
 from last2libre import __version__
 
 LASTFM_BASE_URL = 'https://ws.audioscrobbler.com/2.0/?'
 LIBREFM_BASE_URL = 'https://libre.fm/2.0/?'
 logger = logging.getLogger(__name__)
+
+
+import IPython as ip
 
 
 class Exporter(object):
@@ -96,13 +97,11 @@ class Exporter(object):
                 user=self.username,
                 page=self.page_number,
                 limit=200)
-        url = base_url + urlencode(url_vars)
-        logger.debug('server type: {},url: {}'.format(self.server, url))
 
         # Attempt connection to API URL
         for interval in (1, 5, 10, 62):
             try:
-                f = urlopen(url)
+                response = requests.get(base_url, params=url_vars)
                 break
             except Exception as e:
                 last_exc = e
@@ -113,11 +112,10 @@ class Exporter(object):
             logger.critical('Failed to open page: {}'.format(url_vars['page']))
             raise last_exc
 
-        # Retrieve XML page to export
-        response = f.read()
-        f.close()
-        logger.debug('XML page successfully retrieved.')
-        return response
+        # Retrieve page to export
+        payload = (response.content).decode('utf-8')
+        logger.debug('Page successfully retrieved.')
+        return payload
 
     def get_listen_list(self, response):
         """Read XML page and get a list of listens and their info."""
@@ -129,6 +127,7 @@ class Exporter(object):
         """Check how many pages of listens user has."""
         xml_page = ET.fromstring(response)
         total_pages = xml_page.find(self.entity_type).attrib.get('totalPages')
+        ip.embed(header='get_total_pages')
         logger.info('{} pages found.'.format(total_pages))
         return int(total_pages)
 
